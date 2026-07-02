@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import AsyncGenerator
 
 import httpx
@@ -7,11 +8,11 @@ import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.database import get_db, init_db
+from app.database import get_db
 from app.main import create_app
 from app.models import Base
 
-TEST_DATABASE_URL = "sqlite+aiosqlite://"
+TEST_DATABASE_URL = os.environ["TEST_DATABASE_URL"]
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

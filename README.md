@@ -1,26 +1,27 @@
 # Sharework Sales Management System
 
-A demo sales management system with a hierarchical model: **Sale → Agency → Track Record**. Built with FastAPI (async), React, SQLite, and TanStack Query.
+A demo sales management system with a hierarchical model: **Sale → Agency → Track Record**. Built with FastAPI (async), React, PostgreSQL, and TanStack Query.
 
 ## Architecture
 
 ```
 sharework-sales/
-├── backend/               # FastAPI async API
+├── backend/                # FastAPI async API
 │   └── app/
-│       ├── models.py      # SQLAlchemy ORM entities
-│       ├── schemas.py     # Pydantic request/response schemas
-│       ├── repositories.py# Data access layer (abstract + SQL impl)
-│       ├── services.py    # Business logic layer (abstract + impl)
-│       ├── database.py    # Async engine + session factory
-│       ├── routes/        # FastAPI controllers (sales, agencies, track_records, stats)
-│       └── main.py        # App factory + DI wiring
-├── frontend/              # React (Vite) + Tailwind + TanStack Query
+│       ├── models.py       # SQLAlchemy ORM entities
+│       ├── schemas.py      # Pydantic request/response schemas
+│       ├── repositories.py # Data access layer
+│       ├── services.py     # Business logic layer
+│       ├── database.py     # Async engine + session factory
+│       ├── routes/         # FastAPI controllers
+│       └── main.py         # App factory + DI wiring
+├── frontend/               # React (Vite) + Tailwind + TanStack Query
 │   └── src/
-│       ├── api/           # Axios client + query hooks
-│       ├── components/    # Layout, DataTable, Modal, StatCard, StatusChart, Forms
-│       └── pages/         # Dashboard, Sales, Agencies, TrackRecords
-└── package.json           # Root scripts (concurrently)
+│       ├── api/            # Axios client + query hooks
+│       ├── components/     # Layout, DataTable, Modal, StatCard, StatusChart, Forms
+│       └── pages/          # Dashboard, Sales, Agencies, TrackRecords
+├── docker-compose.yml      # Backend + frontend (no local PG)
+└── .env.example            # Required env vars template
 ```
 
 ### SOLID Principles Applied
@@ -48,10 +49,36 @@ sharework-sales/
 
 ### Prerequisites
 
-- Python 3.10+
-- Node.js 18+
+- Python 3.13+
+- Node.js 22+
+- Docker (optional, for Docker Compose)
+- A PostgreSQL instance (e.g. [Supabase](https://supabase.com))
 
-### Setup
+### Environment Variables
+
+Copy `.env.example` to `.env` and fill in your Supabase credentials:
+
+```bash
+cp .env.example .env
+```
+
+**Required vars:**
+
+| Variable | Description | Example |
+|---|---|---|
+| `DATABASE_URL` | Production/development PostgreSQL connection | `postgresql+asyncpg://postgres:PW@db.abc.supabase.co:5432/postgres` |
+| `TEST_DATABASE_URL` | Test database (separate DB on the same cluster) | `postgresql+asyncpg://postgres:PW@db.abc.supabase.co:5432/sharework_test` |
+
+### Run with Docker Compose
+
+```bash
+docker compose up --build
+```
+
+- Backend: http://localhost:8000 (API docs: http://localhost:8000/docs)
+- Frontend: http://localhost:5173
+
+### Run locally (without Docker)
 
 ```bash
 # Install backend dependencies
@@ -62,26 +89,12 @@ cd frontend && npm install && cd ..
 
 # Install root dev dependency
 npm install
-```
 
-### Run (both servers)
-
-```bash
+# Start both servers
 npm run dev
 ```
 
-- Backend: http://localhost:8000 (API docs: http://localhost:8000/docs)
-- Frontend: http://localhost:5173
-
-### Run separately
-
-```bash
-# Backend only
-npm run dev:backend
-
-# Frontend only
-npm run dev:frontend
-```
+> **Note:** The `DATABASE_URL` env var must be set in your shell or `.env` file when running without Docker.
 
 ## API Endpoints
 
@@ -101,12 +114,14 @@ npm run dev:frontend
 
 **Done:**
 - Full main flow: Create Sale → Agency → Track Record → Dashboard
-- Async SQLite database with SQLAlchemy
+- Async PostgreSQL with SQLAlchemy (hosted on Supabase)
 - RESTful API with FastAPI
 - Clean layered architecture (repositories → services → routes)
 - TanStack Query for automatic cache invalidation
 - Recharts pie chart for status breakdown
 - Tailwind CSS styling
+- Docker Compose for local dev
+- CI with GitHub Actions (PG service container for backend tests)
 
 **Not Done (explicitly out of scope):**
 - Update/delete operations

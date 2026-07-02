@@ -2,7 +2,6 @@ node_modules/
 __pycache__/
 *.pyc
 .env
-dev.db
 dist/
 .DS_Store
 document_source
