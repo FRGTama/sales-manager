@@ -31,7 +31,7 @@ jobs:
       - run: pip install pytest pytest-asyncio httpx
       - run: pytest tests/ -v
         env:
-          TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sharework_test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sharework_test
 
   test-frontend:
     runs-on: ubuntu-latest
