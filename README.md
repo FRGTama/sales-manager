@@ -1,103 +1,219 @@
-# Sharework Sales Management System
+# Sharework Sales Management Demo
 
-A demo sales management system with a hierarchical model: **Sale → Agency → Track Record**. Built with FastAPI (async), React, PostgreSQL, and TanStack Query.
+Demo project for the Sharework AI Intern/Fresher test: **Sale -> Agency -> Track Record -> Dashboard**.
 
-## Architecture
+The goal is to show the main sales-management flow working end-to-end, not to build a full CRM. The app lets a user create Sales, assign Agencies to Sales, create Track Records for Agencies, and view basic dashboard statistics.
 
-```
-sharework-sales/
-├── backend/                # FastAPI async API
-│   └── app/
-│       ├── models.py       # SQLAlchemy ORM entities
-│       ├── schemas.py      # Pydantic request/response schemas
-│       ├── repositories.py # Data access layer
-│       ├── services.py     # Business logic layer
-│       ├── database.py     # Async engine + session factory
-│       ├── routes/         # FastAPI controllers
-│       └── main.py         # App factory + DI wiring
-├── frontend/               # React (Vite) + Tailwind + TanStack Query
-│   └── src/
-│       ├── api/            # Axios client + query hooks
-│       ├── components/     # Layout, DataTable, Modal, StatCard, StatusChart, Forms
-│       └── pages/          # Dashboard, Sales, Agencies, TrackRecords
-├── docker-compose.yml      # Backend + frontend (no local PG)
-└── .env.example            # Required env vars template
+## Tech Stack
+
+- Backend: FastAPI, async SQLAlchemy, Pydantic, asyncpg
+- Frontend: React, Vite, Tailwind CSS, TanStack Query, Axios, Recharts
+- Database: PostgreSQL
+- Local runner: root `npm run dev` starts backend and frontend together
+
+## Main Flow
+
+```text
+Create Sale -> Create Agency assigned to Sale -> Create Track Record assigned to Agency -> View Dashboard
 ```
 
-## Features
+Data relationships:
 
-| Feature | Description |
-|---|---|
-| **Sales** | List, create (name, phone, email, status) |
-| **Agencies** | List, create (assigned to a Sale via dropdown) |
-| **Track Records** | List, create (customer, revenue, status, notes, assigned to Agency) |
-| **Dashboard** | Active sales count, total agencies, track records, status breakdown (PieChart) |
+- One Sale can manage many Agencies.
+- One Agency belongs to one Sale.
+- One Agency can have many Track Records.
+- One Track Record belongs to one Agency.
 
-### Main Flow
+## Project Structure
 
-`Create Sale → Create Agency (assign to Sale) → Create Track Record (assign to Agency) → View Dashboard`
+```text
+.
+├── backend/
+│   ├── app/
+│   │   ├── models.py          # SQLAlchemy models
+│   │   ├── schemas.py         # Pydantic schemas
+│   │   ├── repositories.py    # Database access layer
+│   │   ├── services.py        # Business logic layer
+│   │   ├── database.py        # Async database setup
+│   │   ├── main.py            # FastAPI app setup
+│   │   └── routes/            # API route modules
+│   ├── tests/                 # Backend tests
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── api/               # Axios client and query hooks
+│   │   ├── components/        # Shared UI components/forms
+│   │   └── pages/             # Dashboard, Sales, Agencies, Track Records
+│   └── package.json
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── AI_USAGE.md
+└── README.md
+```
 
-## Quick Start
+## Setup
 
 ### Prerequisites
 
 - Python 3.13+
 - Node.js 22+
-- Docker (optional, for Docker Compose)
-- A PostgreSQL instance (e.g. [Supabase](https://supabase.com))
+- PostgreSQL database
+- Docker, optional
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and fill in your Supabase credentials:
+Create a `.env` file from the example:
 
 ```bash
 cp .env.example .env
 ```
 
-**Required vars:**
+Fill in these values:
 
-| Variable | Description | Example |
-|---|---|---|
-| `DATABASE_URL` | Production/development PostgreSQL connection | `postgresql+asyncpg://postgres:PW@db.abc.supabase.co:5432/postgres` |
-| `TEST_DATABASE_URL` | Test database (separate DB on the same cluster) | `postgresql+asyncpg://postgres:PW@db.abc.supabase.co:5432/sharework_test` |
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@YOUR_HOST:5432/postgres
+TEST_DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@YOUR_HOST:5432/sharework_test
+```
 
-### Run with Docker Compose
+`DATABASE_URL` is used by the running app. `TEST_DATABASE_URL` is used by backend tests and should point to a separate disposable test database.
+
+## Install Dependencies
+
+Install root dev dependencies:
+
+```bash
+npm install
+```
+
+Install backend dependencies:
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+cd ..
+```
+
+Or install everything with:
+
+```bash
+npm run install:all
+```
+
+## Run The Project
+
+Start backend and frontend together:
+
+```bash
+npm run dev
+```
+
+Default URLs:
+
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API docs: `http://localhost:8000/docs`
+
+Run backend only:
+
+```bash
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Run frontend only:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend uses the Vite dev proxy, so API calls to `/api` are forwarded to the backend during development.
+
+## Run With Docker
 
 ```bash
 docker compose up --build
 ```
 
-- Backend: http://localhost:8000 (API docs: http://localhost:8000/docs)
-- Frontend: http://localhost:5173
+This starts the app containers. A PostgreSQL connection still needs to be provided through the environment variables.
 
-### Run locally (without Docker)
+## Tests
+
+Run backend tests:
 
 ```bash
-# Install backend dependencies
-pip install -r backend/requirements.txt
-
-# Install frontend dependencies
-cd frontend && npm install && cd ..
-
-# Install root dev dependency
-npm install
-
-# Start both servers
-npm run dev
+cd backend
+pytest
 ```
 
-> **Note:** The `DATABASE_URL` env var must be set in your shell or `.env` file when running without Docker.
+Run frontend tests:
+
+```bash
+cd frontend
+npm test
+```
+
+Run frontend lint:
+
+```bash
+cd frontend
+npm run lint
+```
 
 ## API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/sales` | List all sales |
-| POST | `/api/sales` | Create a sale |
-| GET | `/api/sales/{id}` | Get sale with agencies |
-| GET | `/api/agencies` | List all agencies (with sale name) |
-| POST | `/api/agencies` | Create agency (requires sale_id) |
-| GET | `/api/agencies/{id}` | Get agency with track records |
-| GET | `/api/track-records` | List all track records (with agency name) |
-| POST | `/api/track-records` | Create track record (requires agency_id) |
-| GET | `/api/stats` | Dashboard aggregations |
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/sales` | List Sales |
+| `POST` | `/api/sales` | Create Sale |
+| `GET` | `/api/sales/{id}` | Get Sale with Agencies |
+| `PUT` | `/api/sales/{id}` | Update Sale |
+| `DELETE` | `/api/sales/{id}` | Delete Sale |
+| `GET` | `/api/agencies` | List Agencies |
+| `POST` | `/api/agencies` | Create Agency assigned to Sale |
+| `GET` | `/api/agencies/{id}` | Get Agency with Track Records |
+| `PUT` | `/api/agencies/{id}` | Update Agency |
+| `DELETE` | `/api/agencies/{id}` | Delete Agency |
+| `GET` | `/api/track-records` | List Track Records |
+| `POST` | `/api/track-records` | Create Track Record assigned to Agency |
+| `PUT` | `/api/track-records/{id}` | Update Track Record |
+| `DELETE` | `/api/track-records/{id}` | Delete Track Record |
+| `GET` | `/api/stats` | Dashboard statistics |
+
+## Completed
+
+- Sale list and create flow.
+- Agency list and create flow with Sale assignment.
+- Track Record list and create flow with Agency assignment.
+- Dashboard showing:
+  - active Sales count
+  - total Agencies
+  - total Track Records
+  - Track Records grouped by status
+- Backend relationship validation:
+  - Agency creation checks that the Sale exists.
+  - Track Record creation checks that the Agency exists.
+- Update and delete flows for Sales, Agencies, and Track Records.
+- Frontend forms, modals, tables, and dashboard chart.
+- Backend tests for the main API behavior.
+- Frontend component/page tests.
+- `AI_USAGE.md` describing how AI was used during development.
+- Live deployment
+
+## Not Completed / Out Of Scope
+
+- Login, authentication, and role-based permissions.
+- Load balancing.
+- Advanced statistics for the dashboard
+- Full production CRM workflow.
+- Advanced filtering, search, and pagination.
+- File upload/export features.
+- Audit logs or activity history.
+
+
