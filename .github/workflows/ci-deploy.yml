@@ -10,6 +10,8 @@ jobs:
     services:
       postgres:
         image: postgres:17-alpine
+        ports:
+          - 5432:5432
         env:
           POSTGRES_DB: sharework_test
           POSTGRES_USER: postgres
@@ -31,7 +33,7 @@ jobs:
       - run: pip install pytest pytest-asyncio httpx
       - run: pytest tests/ -v
         env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sharework_test
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/sharework_test
 
   test-frontend:
     runs-on: ubuntu-latest
