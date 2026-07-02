@@ -1,8 +1,11 @@
-name: Test
-on: [push, pull_request]
+name: CI + Deploy
+
+on:
+  push:
+    branches: [main]
 
 jobs:
-  backend:
+  test-backend:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -30,7 +33,7 @@ jobs:
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/sharework_test
 
-  frontend:
+  test-frontend:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -42,3 +45,21 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm test -- --run
+
+  deploy:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/sharework
+            git pull origin main
+            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f
