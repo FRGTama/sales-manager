@@ -7,6 +7,7 @@ vi.mock('../api/hooks', () => ({
   useStats: vi.fn(),
   useSales: vi.fn(),
   useCreateSale: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
+  useDeleteSale: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
   useAgencies: vi.fn(),
   useCreateAgency: () => ({ mutate: vi.fn(), isPending: false, isError: false }),
   useTrackRecords: vi.fn(),
