@@ -1,77 +1,13 @@
-from abc import ABC, abstractmethod
 from typing import Optional
 
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from app.models import Agency, Sale, TrackRecord
 
 
-class SaleRepository(ABC):
-    @abstractmethod
-    async def list_all(self) -> list[Sale]:
-        ...
-
-    @abstractmethod
-    async def get_by_id(self, sale_id: int) -> Optional[Sale]:
-        ...
-
-    @abstractmethod
-    async def create(self, name: str, phone: str, email: str, status: str) -> Sale:
-        ...
-
-
-class AgencyRepository(ABC):
-    @abstractmethod
-    async def list_all(self) -> list[Agency]:
-        ...
-
-    @abstractmethod
-    async def get_by_id(self, agency_id: int) -> Optional[Agency]:
-        ...
-
-    @abstractmethod
-    async def create(self, name: str, address: str, area: str, sale_id: int) -> Agency:
-        ...
-
-
-class TrackRecordRepository(ABC):
-    @abstractmethod
-    async def list_all(self) -> list[TrackRecord]:
-        ...
-
-    @abstractmethod
-    async def create(
-        self,
-        customer_name: str,
-        expected_revenue: float,
-        status: str,
-        notes: Optional[str],
-        agency_id: int,
-    ) -> TrackRecord:
-        ...
-
-
-class StatsRepository(ABC):
-    @abstractmethod
-    async def get_active_sales_count(self) -> int:
-        ...
-
-    @abstractmethod
-    async def get_total_agencies(self) -> int:
-        ...
-
-    @abstractmethod
-    async def get_total_track_records(self) -> int:
-        ...
-
-    @abstractmethod
-    async def get_track_records_by_status(self) -> dict[str, int]:
-        ...
-
-
-class SQLSaleRepository(SaleRepository):
+class SaleRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
@@ -91,8 +27,29 @@ class SQLSaleRepository(SaleRepository):
         await self._session.flush()
         return sale
 
+    async def update(
+        self, sale_id: int, name: str, phone: str, email: str, status: str
+    ) -> Optional[Sale]:
+        sale = await self._session.get(Sale, sale_id)
+        if not sale:
+            return None
+        sale.name = name
+        sale.phone = phone
+        sale.email = email
+        sale.status = status
+        await self._session.flush()
+        return sale
 
-class SQLAgencyRepository(AgencyRepository):
+    async def delete(self, sale_id: int) -> bool:
+        sale = await self._session.get(Sale, sale_id)
+        if not sale:
+            return False
+        await self._session.delete(sale)
+        await self._session.flush()
+        return True
+
+
+class AgencyRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
@@ -123,8 +80,29 @@ class SQLAgencyRepository(AgencyRepository):
         await self._session.flush()
         return agency
 
+    async def update(
+        self, agency_id: int, name: str, address: str, area: str, sale_id: int
+    ) -> Optional[Agency]:
+        agency = await self._session.get(Agency, agency_id)
+        if not agency:
+            return None
+        agency.name = name
+        agency.address = address
+        agency.area = area
+        agency.sale_id = sale_id
+        await self._session.flush()
+        return agency
 
-class SQLTrackRecordRepository(TrackRecordRepository):
+    async def delete(self, agency_id: int) -> bool:
+        agency = await self._session.get(Agency, agency_id)
+        if not agency:
+            return False
+        await self._session.delete(agency)
+        await self._session.flush()
+        return True
+
+
+class TrackRecordRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
@@ -160,8 +138,36 @@ class SQLTrackRecordRepository(TrackRecordRepository):
         await self._session.flush()
         return record
 
+    async def update(
+        self,
+        record_id: int,
+        customer_name: str,
+        expected_revenue: float,
+        status: str,
+        notes: Optional[str],
+        agency_id: int,
+    ) -> Optional[TrackRecord]:
+        record = await self._session.get(TrackRecord, record_id)
+        if not record:
+            return None
+        record.customer_name = customer_name
+        record.expected_revenue = expected_revenue
+        record.status = status
+        record.notes = notes
+        record.agency_id = agency_id
+        await self._session.flush()
+        return record
 
-class SQLStatsRepository(StatsRepository):
+    async def delete(self, record_id: int) -> bool:
+        record = await self._session.get(TrackRecord, record_id)
+        if not record:
+            return False
+        await self._session.delete(record)
+        await self._session.flush()
+        return True
+
+
+class StatsRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 

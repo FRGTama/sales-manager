@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas import SaleCreate, SaleResponse, SaleWithAgenciesResponse
-from app.services import DefaultSaleService, SaleService
+from app.database import get_db
+from app.repositories import SaleRepository, AgencyRepository
+from app.schemas import SaleCreate, SaleResponse, SaleUpdate, SaleWithAgenciesResponse
+from app.services import SaleService
 
 router = APIRouter(prefix="/api/sales", tags=["Sales"])
 
 
-def get_sale_service() -> SaleService:
-    raise NotImplementedError("Override via dependencies")
+async def get_sale_service(db: AsyncSession = Depends(get_db)) -> SaleService:
+    return SaleService(SaleRepository(db), AgencyRepository(db))
 
 
 @router.get("", response_model=list[SaleResponse])
@@ -26,3 +29,18 @@ async def get_sale(sale_id: int, service: SaleService = Depends(get_sale_service
     if not result:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sale not found")
     return result
+
+
+@router.put("/{sale_id}", response_model=SaleResponse)
+async def update_sale(sale_id: int, payload: SaleUpdate, service: SaleService = Depends(get_sale_service)):
+    result = await service.update_sale(sale_id, payload)
+    if not result:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sale not found")
+    return result
+
+
+@router.delete("/{sale_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_sale(sale_id: int, service: SaleService = Depends(get_sale_service)):
+    deleted = await service.delete_sale(sale_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sale not found")

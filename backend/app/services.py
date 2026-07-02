@@ -1,7 +1,5 @@
-from abc import ABC, abstractmethod
 from typing import Optional
 
-from app.models import Agency, Sale, TrackRecord
 from app.repositories import (
     AgencyRepository,
     SaleRepository,
@@ -11,61 +9,20 @@ from app.repositories import (
 from app.schemas import (
     AgencyCreate,
     AgencyResponse,
+    AgencyUpdate,
     AgencyWithRecordsResponse,
     SaleCreate,
     SaleResponse,
+    SaleUpdate,
     SaleWithAgenciesResponse,
     StatsResponse,
     TrackRecordCreate,
     TrackRecordResponse,
+    TrackRecordUpdate,
 )
 
 
-class SaleService(ABC):
-    @abstractmethod
-    async def list_sales(self) -> list[SaleResponse]:
-        ...
-
-    @abstractmethod
-    async def get_sale(self, sale_id: int) -> Optional[SaleWithAgenciesResponse]:
-        ...
-
-    @abstractmethod
-    async def create_sale(self, payload: SaleCreate) -> SaleResponse:
-        ...
-
-
-class AgencyService(ABC):
-    @abstractmethod
-    async def list_agencies(self) -> list[AgencyResponse]:
-        ...
-
-    @abstractmethod
-    async def get_agency(self, agency_id: int) -> Optional[AgencyWithRecordsResponse]:
-        ...
-
-    @abstractmethod
-    async def create_agency(self, payload: AgencyCreate) -> AgencyResponse:
-        ...
-
-
-class TrackRecordService(ABC):
-    @abstractmethod
-    async def list_track_records(self) -> list[TrackRecordResponse]:
-        ...
-
-    @abstractmethod
-    async def create_track_record(self, payload: TrackRecordCreate) -> TrackRecordResponse:
-        ...
-
-
-class StatsService(ABC):
-    @abstractmethod
-    async def get_stats(self) -> StatsResponse:
-        ...
-
-
-class DefaultSaleService(SaleService):
+class SaleService:
     def __init__(self, sale_repo: SaleRepository, agency_repo: AgencyRepository):
         self._sale_repo = sale_repo
         self._agency_repo = agency_repo
@@ -89,8 +46,23 @@ class DefaultSaleService(SaleService):
         )
         return SaleResponse.model_validate(sale)
 
+    async def update_sale(self, sale_id: int, payload: SaleUpdate) -> Optional[SaleResponse]:
+        sale = await self._sale_repo.update(
+            sale_id=sale_id,
+            name=payload.name,
+            phone=payload.phone,
+            email=payload.email,
+            status=payload.status,
+        )
+        if not sale:
+            return None
+        return SaleResponse.model_validate(sale)
 
-class DefaultAgencyService(AgencyService):
+    async def delete_sale(self, sale_id: int) -> bool:
+        return await self._sale_repo.delete(sale_id)
+
+
+class AgencyService:
     def __init__(self, agency_repo: AgencyRepository, sale_repo: SaleRepository):
         self._agency_repo = agency_repo
         self._sale_repo = sale_repo
@@ -136,8 +108,36 @@ class DefaultAgencyService(AgencyService):
             created_at=agency.created_at,
         )
 
+    async def update_agency(
+        self, agency_id: int, payload: AgencyUpdate
+    ) -> Optional[AgencyResponse]:
+        sale = await self._sale_repo.get_by_id(payload.sale_id)
+        if not sale:
+            raise ValueError(f"Sale with id {payload.sale_id} not found")
+        agency = await self._agency_repo.update(
+            agency_id=agency_id,
+            name=payload.name,
+            address=payload.address,
+            area=payload.area,
+            sale_id=payload.sale_id,
+        )
+        if not agency:
+            return None
+        return AgencyResponse(
+            id=agency.id,
+            name=agency.name,
+            address=agency.address,
+            area=agency.area,
+            sale_id=agency.sale_id,
+            sale_name=sale.name,
+            created_at=agency.created_at,
+        )
 
-class DefaultTrackRecordService(TrackRecordService):
+    async def delete_agency(self, agency_id: int) -> bool:
+        return await self._agency_repo.delete(agency_id)
+
+
+class TrackRecordService:
     def __init__(self, record_repo: TrackRecordRepository, agency_repo: AgencyRepository):
         self._record_repo = record_repo
         self._agency_repo = agency_repo
@@ -180,8 +180,38 @@ class DefaultTrackRecordService(TrackRecordService):
             created_at=record.created_at,
         )
 
+    async def update_track_record(
+        self, record_id: int, payload: TrackRecordUpdate
+    ) -> Optional[TrackRecordResponse]:
+        agency = await self._agency_repo.get_by_id(payload.agency_id)
+        if not agency:
+            raise ValueError(f"Agency with id {payload.agency_id} not found")
+        record = await self._record_repo.update(
+            record_id=record_id,
+            customer_name=payload.customer_name,
+            expected_revenue=payload.expected_revenue,
+            status=payload.status,
+            notes=payload.notes,
+            agency_id=payload.agency_id,
+        )
+        if not record:
+            return None
+        return TrackRecordResponse(
+            id=record.id,
+            customer_name=record.customer_name,
+            expected_revenue=record.expected_revenue,
+            status=record.status,
+            notes=record.notes,
+            agency_id=record.agency_id,
+            agency_name=agency.name,
+            created_at=record.created_at,
+        )
 
-class DefaultStatsService(StatsService):
+    async def delete_track_record(self, record_id: int) -> bool:
+        return await self._record_repo.delete(record_id)
+
+
+class StatsService:
     def __init__(self, stats_repo: StatsRepository):
         self._stats_repo = stats_repo
 

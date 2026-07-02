@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class SaleCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    phone: str = Field(..., min_length=1, max_length=20)
+    phone: str = Field(..., pattern=r"^0\d{9}$")
     email: str = Field(..., min_length=1, max_length=100)
     status: str = Field(default="active", pattern=r"^(active|inactive)$")
 
@@ -25,6 +25,13 @@ class SaleResponse(BaseModel):
 
 class SaleWithAgenciesResponse(SaleResponse):
     agencies: list["AgencyResponse"] = []
+
+
+class SaleUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    phone: str = Field(..., pattern=r"^0\d{9}$")
+    email: str = Field(..., min_length=1, max_length=100)
+    status: str = Field(default="active", pattern=r"^(active|inactive)$")
 
 
 class AgencyCreate(BaseModel):
@@ -50,6 +57,13 @@ class AgencyWithRecordsResponse(AgencyResponse):
     track_records: list["TrackRecordResponse"] = []
 
 
+class AgencyUpdate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    address: str = Field(..., min_length=1, max_length=255)
+    area: str = Field(..., min_length=1, max_length=100)
+    sale_id: int = Field(..., gt=0)
+
+
 class TrackRecordCreate(BaseModel):
     customer_name: str = Field(..., min_length=1, max_length=100)
     expected_revenue: float = Field(default=0.0, ge=0)
@@ -69,6 +83,14 @@ class TrackRecordResponse(BaseModel):
     agency_id: int
     agency_name: Optional[str] = None
     created_at: datetime.datetime
+
+
+class TrackRecordUpdate(BaseModel):
+    customer_name: str = Field(..., min_length=1, max_length=100)
+    expected_revenue: float = Field(default=0.0, ge=0)
+    status: str = Field(default="new", pattern=r"^(new|contacted|potential|won|lost)$")
+    notes: Optional[str] = None
+    agency_id: int = Field(..., gt=0)
 
 
 class StatsResponse(BaseModel):

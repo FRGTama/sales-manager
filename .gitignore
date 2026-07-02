@@ -6,3 +6,4 @@ dist/
 .DS_Store
 document_source
 .vscode
+.pytest_cache/

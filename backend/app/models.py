@@ -13,7 +13,7 @@ class Sale(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False)
-    phone = Column(String(20), nullable=False)
+    phone = Column(String(10), nullable=False)
     email = Column(String(100), nullable=False)
     status = Column(String(20), nullable=False, default="active")
     created_at = Column(DateTime, nullable=False, server_default=func.now())
