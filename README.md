@@ -1,6 +1,6 @@
-# Sharework Sales Management Demo
+# Sharework Sales Management
 
-Demo project for the Sharework AI Intern/Fresher test: **Sale -> Agency -> Track Record -> Dashboard**.
+Live demo: https://sharework.tama-dev.org/
 
 The goal is to show the main sales-management flow working end-to-end, not to build a full CRM. The app lets a user create Sales, assign Agencies to Sales, create Track Records for Agencies, and view basic dashboard statistics.
 
