@@ -24,14 +24,6 @@ sharework-sales/
 └── .env.example            # Required env vars template
 ```
 
-### SOLID Principles Applied
-
-- **Single Responsibility** — models, schemas, repositories, services, routes each have one concern
-- **Open/Closed** — new entities or stats queries extend without modifying existing code
-- **Liskov Substitution** — service/repository ABCs define interfaces; implementations are swappable
-- **Interface Segregation** — separate Pydantic schemas per operation; focused repository interfaces
-- **Dependency Inversion** — services depend on abstract repository interfaces; FastAPI DI wires concretions
-
 ## Features
 
 | Feature | Description |
@@ -109,24 +101,3 @@ npm run dev
 | GET | `/api/track-records` | List all track records (with agency name) |
 | POST | `/api/track-records` | Create track record (requires agency_id) |
 | GET | `/api/stats` | Dashboard aggregations |
-
-## What's Done / Not Done
-
-**Done:**
-- Full main flow: Create Sale → Agency → Track Record → Dashboard
-- Async PostgreSQL with SQLAlchemy (hosted on Supabase)
-- RESTful API with FastAPI
-- Clean layered architecture (repositories → services → routes)
-- TanStack Query for automatic cache invalidation
-- Recharts pie chart for status breakdown
-- Tailwind CSS styling
-- Docker Compose for local dev
-- CI with GitHub Actions (PG service container for backend tests)
-
-**Not Done (explicitly out of scope):**
-- Update/delete operations
-- Authentication / authorization
-- Pagination
-- Search / filtering
-- Data export
-- Deployment
